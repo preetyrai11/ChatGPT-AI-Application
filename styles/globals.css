@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+
+
+
+
+
+
+@layer components {
+    .btn {
+        @apply rounded-md bg-emerald-500 px-4 py-2 text-white hover:bg-emerald-600 disabled:bg-emerald-200;
+    }
+
+
+    .side-menu-item {
+      @apply m-2 p-2 flex items-center gap-4 rounded-md hover:bg-gray-800; 
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
