@@ -8,9 +8,33 @@ export const config = {
 
 export default async function handler(req){
     
+    console.log("IN HERE");
     try{ 
         const {message} = await req.json();
-        console.log("MESSAGE: ", message); 
+        console.log("MESSAGE: ", message);
+
+        const initialChatMessage = {
+            role: "system",
+            content: "Your name is AI application, you are incredibly intelligent AI"
+        }; 
+
+        const response = await fetch(`${req.headers.get("origin")}/api/chat/createNewChat`, 
+        {
+            method: "POST",
+            headers: {
+              'content-type': 'application/json',
+              cookie: req.headers.get("cookie"), 
+            },
+            body: JSON.stringify({
+              message, 
+            }), 
+        });
+      
+        const json = await response.json();
+        console.log("NEW CHAT: ", json);
+
+        const chatId = json._id;
+        
         const stream = await OpenAIEdgeStream(
             "https://api.openai.com/v1/chat/completions", 
             {
@@ -27,6 +51,26 @@ export default async function handler(req){
 
                     stream: true, 
                 }),
+            }, 
+            {
+                onBeforeStream: ({emit}) => {
+                    emit(chatId, "newChatId");
+                },
+                onAfterStream: async ({ fullContent }) => {
+                   await fetch(`${req.headers.get("origin")}/api/chat/addMessageToChat`, {
+                       method: "POST",
+                       headers: {
+                         'content-type': "application/json",
+                          cookie: req.headers.get("cookie"), 
+                       }, 
+                       body: JSON.stringify({
+                         chatId,
+                         role: "assistant",
+                         content: fullContent, 
+                       }), 
+                   }
+                  ); 
+                }, 
             }
         );
         return new Response(stream);
