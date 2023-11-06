@@ -34,7 +34,13 @@ export const ChatSidebar = ({ chatId }) => {
                 className={`side-menu-item ${chatId === chat._id ? "bg-gray-700 hover:bg-gray-700" : "" 
               }`}
               >  
-                 <FontAwesomeIcon icon={faMessage} /> {chat.title} 
+                 <FontAwesomeIcon icon={faMessage} /> 
+                 <span 
+                   title={chat.title} 
+                   className="overflow-hidden text-ellipses whitespace-nowrap"
+                   > 
+                    {chat.title}
+                   </span>
               </Link>
              ))}
           </div>

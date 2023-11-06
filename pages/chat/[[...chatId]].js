@@ -18,8 +18,10 @@ const ChatPage = ({ chatId, title, messages = [] }) => {
   const [messageText, setMessageText] = useState("");
   const [newChatMessages, setNewChatMessages] = useState([]);
   const [generatingResponse, setGeneratingResponse] = useState(false);
+  const [fullMessage, setFullMessage] = useState(""); 
   const router = useRouter();
 
+  // when our route changes 
   useEffect(() => {
       if(!generatingResponse && newChatId){
         setNewChatId(null);
@@ -28,6 +30,20 @@ const ChatPage = ({ chatId, title, messages = [] }) => {
   }, [newChatId, generatingResponse, router]);  
 
 
+  // save the newly stressed message to new chat message
+  useEffect(() => {
+    if(!generatingResponse && fullMessage){
+      setNewChatMessages(prev => [...prev, {
+         _id: uuid(),
+         role: "assistant",
+         content: fullMessage
+      }])
+      setFullMessage(""); 
+    }
+  }, [generatingResponse, fullMessage]); 
+
+
+  // if we've created a new chat 
   useEffect(() => {
      setNewChatMessages([]);
      setNewChatId(null);
@@ -72,7 +88,7 @@ const ChatPage = ({ chatId, title, messages = [] }) => {
             'content-type': 'application/json' 
 
         }, 
-        body: JSON.stringify({message: messageText }), 
+        body: JSON.stringify({ chatId, message: messageText }), 
     }); 
 
     const data = response.body;
@@ -90,9 +106,11 @@ const ChatPage = ({ chatId, title, messages = [] }) => {
            setNewChatId(message.content); 
          }else{
            setIncomingMessage((s) => `${s}${message.content}`);
+           content = content + message.content; 
          }
     }); 
   
+    setFullMessage(content); 
     setIncomingMessage("");
     setGeneratingResponse(false);
   }; 

@@ -10,7 +10,8 @@ export default async function handler(req){
     
     console.log("IN HERE");
     try{ 
-        const {message} = await req.json();
+        const { chatId: chatIdFromParam, message} = await req.json();
+        let chatId = chatIdFromParam; 
         console.log("MESSAGE: ", message);
 
         const initialChatMessage = {
@@ -18,22 +19,43 @@ export default async function handler(req){
             content: "Your name is AI application, you are incredibly intelligent AI"
         }; 
 
-        const response = await fetch(`${req.headers.get("origin")}/api/chat/createNewChat`, 
-        {
+        let newChatId;
+
+      if(chatId){
+        // add message to chat 
+         const response = await fetch(`${req.headers.get("origin")}/api/chat/addMessageToChat`,{
+             method: "POST",
+             headers: {
+                'content-type': "application/json",
+                cookie: req.headers.get("cookie"), 
+             }, 
+             body: JSON.stringify({
+                chatId,
+                role: "user",
+                content: message,
+             }), 
+          }
+        ); 
+       }else{ 
+
+          const response = await fetch(`${req.headers.get("origin")}/api/chat/createNewChat`, 
+          {
             method: "POST",
             headers: {
               'content-type': 'application/json',
               cookie: req.headers.get("cookie"), 
             },
-            body: JSON.stringify({
+             body: JSON.stringify({
               message, 
-            }), 
-        });
+             }), 
+          });
       
-        const json = await response.json();
-        console.log("NEW CHAT: ", json);
+          const json = await response.json();
+          console.log("NEW CHAT: ", json);
 
-        const chatId = json._id;
+          chatId = json._id;
+          newChatId = json._id;
+        } 
         
         const stream = await OpenAIEdgeStream(
             "https://api.openai.com/v1/chat/completions", 
@@ -54,7 +76,9 @@ export default async function handler(req){
             }, 
             {
                 onBeforeStream: ({emit}) => {
-                    emit(chatId, "newChatId");
+                    if(newChatId){
+                        emit(chatId, "newChatId");
+                    } 
                 },
                 onAfterStream: async ({ fullContent }) => {
                    await fetch(`${req.headers.get("origin")}/api/chat/addMessageToChat`, {
